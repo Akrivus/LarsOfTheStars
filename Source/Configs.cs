@@ -20,6 +20,7 @@ namespace LarsOfTheStars.Source
         public float Difficulty { get; set; }   //     1
         public int AutoStart { get; set; }      //    -1
         public bool DiscordRPC { get; set; }     //  true
+        public bool JoystickEnabled { get; set; } // false
 
         public Configs(bool reset = false)
         {
@@ -40,6 +41,7 @@ namespace LarsOfTheStars.Source
                 Difficulty = 1;
                 AutoStart = -1;
                 DiscordRPC = true;
+                JoystickEnabled = false;
             }
         }
         public static void Load()

@@ -45,7 +45,7 @@ namespace LarsOfTheStars.Source.Logic.Objects
             {
                 if (Game.IsFocused)
                 {
-                    if (Joystick.IsConnected((uint)(Rank - 1)))
+                    if (Game.Configs.JoystickEnabled && Joystick.IsConnected((uint)(Rank - 1)))
                     {
                         Right((int)(Joystick.GetAxisPosition((uint)(Rank - 1), Joystick.Axis.X) / 25), target.FrameDelta);
                         Right((int)(Joystick.GetAxisPosition((uint)(Rank - 1), Joystick.Axis.U) / 25), target.FrameDelta);
