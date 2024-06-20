@@ -3,7 +3,7 @@ require_relative '../init.rb'
 module LarsOfTheStars
     class Discord
         $bot = Discordrb::Bot.new({
-            :token => "NDU5NDMzNzM2MjQ5ODAyNzYy.DoarFQ.307Er0FMKwLfcJYFBBmnfCo8AOM",
+            :token => ENV["DISCORD_API_TOKEN"],
             :client_id => 168123456789123456
         })
         $bot.mention do |event|
