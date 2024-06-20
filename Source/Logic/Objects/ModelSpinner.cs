@@ -15,74 +15,81 @@ namespace LarsOfTheStars.Source.Logic.Objects
         public Vector2f LastPosition = new Vector2f(0, 0);
         public ModelSpinner(float x = 0, float y = 0) : base(x, y, 0)
         {
-            this.MaxDamage = 3;
-            if (Game.Mode.IsMultiUser())
+            MaxDamage = 3 * (Game.Mode.Level / 20 + 1);
+            if (Game.RNG.Next(4) < 3)
             {
-                if (Game.RNG.Next(2) == 0)
-                {
-                    this.Destination = new Vector2f(Game.ServerPlayer1.Position.X, Game.ServerPlayer1.Position.Y + Game.RNG.Next(16) - 8);
-                }
-                else
-                {
-                    this.Destination = new Vector2f(Game.ServerPlayer2.Position.X, Game.ServerPlayer2.Position.Y + Game.RNG.Next(16) - 8);
-                }
+                SweepRight = Game.RNG.Next(2) == 0;
             }
             else
             {
-                this.Destination = new Vector2f(Game.ServerPlayer1.Position.X, Game.ServerPlayer1.Position.Y + Game.RNG.Next(16) - 8);
+                if (Game.Mode.IsMultiUser())
+                {
+                    if (Game.RNG.Next(2) == 0)
+                    {
+                        Destination = new Vector2f(Game.ServerPlayer1.Position.X, Game.ServerPlayer1.Position.Y + Game.RNG.Next(16) - 8);
+                    }
+                    else
+                    {
+                        Destination = new Vector2f(Game.ServerPlayer2.Position.X, Game.ServerPlayer2.Position.Y + Game.RNG.Next(16) - 8);
+                    }
+                }
+                else
+                {
+                    Destination = new Vector2f(Game.ServerPlayer1.Position.X, Game.ServerPlayer1.Position.Y + Game.RNG.Next(16) - 8);
+                }
+                SweepRight = Destination.X < 128;
             }
-            this.SweepRight = this.Destination.X < 128;
-            this.Position = new Vector2f(this.SweepRight ? Game.RNG.Next(28, 128) : Game.RNG.Next(128, 228), 0);
-            this.Buffer = this.Position.X;
-            this.Start = this.Position;
+            Position = new Vector2f(SweepRight ? Game.RNG.Next(28, 128) : Game.RNG.Next(128, 228), 0);
+            Buffer = Position.X;
+            Start = Position;
         }
         public override void Update(Display target)
         {
             base.Update(target);
-            if (this.IsNotDead() && Game.ServerPlayer1.Buff != ModelPlayer.PowerUp.FREEZE_ALL_SHIPS)
+            if (IsNotDead() && Game.ServerPlayer1.Buff != ModelPlayer.PowerUp.FREEZE_ALL_SHIPS)
             {
-                float NewY = this.Position.Y + (target.FrameDelta / 2);
-                if (this.Position.X > 228 && this.SweepRight)
+                float NewY = Position.Y + (target.FrameDelta / 2);
+                if (Position.X > 228 && SweepRight)
                 {
-                    this.SweepRight = false;
+                    SweepRight = false;
                 }
-                else if (this.Position.X < 28 && !this.SweepRight)
+                else if (Position.X < 28 && !SweepRight)
                 {
-                    this.SweepRight = true;
+                    SweepRight = true;
                 }
-                float NewX = this.Position.X + (target.FrameDelta / 2 / Game.Configs.Difficulty) * (this.SweepRight ? 1 : -1);
-                this.Position = new Vector2f(NewX, NewY);
-                if (this.IsCollidingWithPlayer1())
+                float NewX = Position.X + (target.FrameDelta / 2 / Game.Configs.Difficulty) * (SweepRight ? 1 : -1);
+                Position = new Vector2f(NewX, NewY);
+                if (IsCollidingWithPlayer1())
                 {
                     Game.ServerPlayer1.DamagePlayer(1);
                     Sounds.Play("boom.ogg");
-                    this.Kill();
+                    Kill();
                 }
-                if (this.IsCollidingWithPlayer2())
+                if (IsCollidingWithPlayer2())
                 {
                     Game.ServerPlayer2.DamagePlayer(1);
                     Sounds.Play("boom.ogg");
-                    this.Kill();
+                    Kill();
                 }
             }
         }
         public override void OnDeath()
         {
-            if (!this.OutsideOfScreen())
+            if (!OutsideOfScreen())
             {
                 for (int i = 0; i < 6; ++i)
                 {
-                    Game.AddEntity(new RenderGib(new ModelGib(this.Position.X + (Game.RNG.Next(16) - 8), this.Position.Y + (Game.RNG.Next(16) - 8), "spinner", i)));
+                    Game.AddEntity(new RenderGib(new ModelGib(Position.X + (Game.RNG.Next(16) - 8), Position.Y + (Game.RNG.Next(16) - 8), "spinner", i)));
                     for (int j = 0; j < Game.Configs.MaxParticles / 10; ++j)
                     {
-                        Game.AddEntity(new RenderParticle(new ModelParticle(this.Position.X + (Game.RNG.Next(16) - 8), this.Position.Y + (Game.RNG.Next(16) - 8), Game.RNG.Next(360), Color.White)));
+                        Game.AddEntity(new RenderParticle(new ModelParticle(Position.X + (Game.RNG.Next(16) - 8), Position.Y + (Game.RNG.Next(16) - 8), Game.RNG.Next(360), Color.White)));
                     }
                 }
             }
         }
         public override bool CanBeSwept()
         {
-            return !this.Deactivated;
+            return !Deactivated;
         }
     }
 }

@@ -8,6 +8,7 @@ namespace LarsOfTheStars.Source
         public int Update { get; set; }         //      System Specified
         public int MaxParticles { get; set; }   //    80
         public int MaxStars { get; set; }       //    40
+        public int MaxSounds { get; set; }      //     8
         public bool FadeOut { get; set; }       //  true
         public float SoundVolume { get; set; }  //   100
         public float MusicVolume { get; set; }  //    75
@@ -19,25 +20,28 @@ namespace LarsOfTheStars.Source
         public float Difficulty { get; set; }   //     1
         public int AutoStart { get; set; }      //    -1
         public bool DiscordRPC { get; set; }     //  true
+        public bool JoystickEnabled { get; set; } // false
 
         public Configs(bool reset = false)
         {
             if (reset)
             {
-                this.Update = Game.Version;
-                this.MaxParticles = 80;
-                this.MaxStars = 40;
-                this.FadeOut = true;
-                this.SoundVolume = 100;
-                this.MusicVolume = 50;
-                this.FrameRate = 120;
-                this.VSync = true;
-                this.Fullscreen = false;
-                this.ScreenHeight = 576;
-                this.ScreenWidth = 768;
-                this.Difficulty = 1;
-                this.AutoStart = -1;
-                this.DiscordRPC = true;
+                Update = Game.Version;
+                MaxParticles = 80;
+                MaxStars = 40;
+                MaxSounds = 8;
+                FadeOut = true;
+                SoundVolume = 100;
+                MusicVolume = 50;
+                FrameRate = 120;
+                VSync = true;
+                Fullscreen = false;
+                ScreenHeight = 576;
+                ScreenWidth = 768;
+                Difficulty = 1;
+                AutoStart = -1;
+                DiscordRPC = true;
+                JoystickEnabled = false;
             }
         }
         public static void Load()
@@ -45,6 +49,14 @@ namespace LarsOfTheStars.Source
             if (File.Exists("LarsOfTheStars.json"))
             {
                 Game.Configs = JsonConvert.DeserializeObject<Configs>(File.ReadAllText("LarsOfTheStars.json"));
+                if (Game.Configs.MaxSounds == 0)
+                {
+                    Game.Configs.MaxSounds = 8;
+                }
+                if (Game.Configs.MaxSounds <= 3)
+                {
+                    Game.Configs.MaxSounds = 3;
+                }
             }
             else
             {

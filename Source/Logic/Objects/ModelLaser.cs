@@ -7,6 +7,7 @@ namespace LarsOfTheStars.Source.Logic.Objects
     public class ModelLaser : Model
     {
         public bool OwnedByPlayer = true;
+        public int Rank = 1;
         public Color Color = Color.Black;
         public bool FlashRainbowColors = false;
         public float RainbowIndex = 0;
@@ -15,34 +16,40 @@ namespace LarsOfTheStars.Source.Logic.Objects
         public float Velocity = 2F;
         public ModelLaser(float x, float y, float v, float xT = 0, float yT = 1, float rotation = 0) : base(x, y, rotation)
         {
-            this.Color = Color.Black;
-            this.Velocity = v;
-            this.XTrajectory = xT;
-            this.YTrajectory = yT;
+            Color = Color.Black;
+            Velocity = v;
+            XTrajectory = xT;
+            YTrajectory = yT;
         }
         public ModelLaser SetColor(Color color)
         {
-            this.Color = color;
-            if ((this.Color.R + this.Color.G + this.Color.B) == 0)
+            Color = color;
+            if ((Color.R + Color.G + Color.B) == 0)
             {
-                this.FlashRainbowColors = true;
+                FlashRainbowColors = true;
+                Velocity *= 1.5F;
             }
             return this;
         }
         public ModelLaser CreatedByNPC()
         {
-            this.OwnedByPlayer = false;
+            OwnedByPlayer = false;
+            return this;
+        }
+        public ModelLaser SetRank(int rank)
+        {
+            Rank = rank;
             return this;
         }
         public override void Update(Display target)
         {
             base.Update(target);
-            if (this.IsNotDead())
+            if (IsNotDead())
             {
-                float NewX = this.Position.X + this.Velocity * this.XTrajectory * target.FrameDelta;
-                float NewY = this.Position.Y - this.Velocity * this.YTrajectory * target.FrameDelta;
-                this.Position = new Vector2f(NewX, NewY);
-                if (this.Position.X + this.Position.Y != 0)
+                float NewX = Position.X + Velocity * XTrajectory * target.FrameDelta;
+                float NewY = Position.Y - Velocity * YTrajectory * target.FrameDelta;
+                Position = new Vector2f(NewX, NewY);
+                if (Position.X + Position.Y != 0)
                 {
                     for (int i = 0; i < Game.ServerEntities.Count; ++i)
                     {
@@ -51,7 +58,8 @@ namespace LarsOfTheStars.Source.Logic.Objects
                         {
                             if (model.OnLaserHit(this))
                             {
-                                this.Kill();
+                                Kill();
+                                return;
                             }
                         }
                     }
@@ -59,53 +67,55 @@ namespace LarsOfTheStars.Source.Logic.Objects
                     {
                         if (Game.ServerPlayer1.OnLaserHit(this))
                         {
-                            this.Kill();
+                            Kill();
+                            return;
                         }
                     }
                     if (Game.ServerPlayer2.IsCollidingWith(this))
                     {
                         if (Game.ServerPlayer2.OnLaserHit(this))
                         {
-                            this.Kill();
+                            Kill();
+                            return;
                         }
                     }
                 }
-                if (this.FlashRainbowColors || (this.Color.R + this.Color.G + this.Color.B) == 0)
+                if (FlashRainbowColors || (Color.R + Color.G + Color.B) == 0)
                 {
-                    float convolve = this.RainbowIndex % 1 * 6;
+                    float convolve = RainbowIndex % 1 * 6;
                     byte ascending = (byte)(convolve % 1 * 255);
                     byte descending = (byte)(255 - ascending);
                     switch ((int)(convolve))
                     {
                         case 0:
-                            this.Color = new Color(255, ascending, 0);
+                            Color = new Color(255, ascending, 0);
                             break;
                         case 1:
-                            this.Color = new Color(descending, 255, 0);
+                            Color = new Color(descending, 255, 0);
                             break;
                         case 2:
-                            this.Color = new Color(0, 255, ascending);
+                            Color = new Color(0, 255, ascending);
                             break;
                         case 3:
-                            this.Color = new Color(0, descending, 255);
+                            Color = new Color(0, descending, 255);
                             break;
                         case 4:
-                            this.Color = new Color(ascending, 0, 255);
+                            Color = new Color(ascending, 0, 255);
                             break;
                         default:
-                            this.Color = new Color(255, 0, descending);
+                            Color = new Color(255, 0, descending);
                             break;
                     }
-                    this.FlashRainbowColors = true;
-                    this.RainbowIndex += target.FrameDelta / 75;
-                    if (this.RainbowIndex > 360)
+                    FlashRainbowColors = true;
+                    RainbowIndex += target.FrameDelta / 75;
+                    if (RainbowIndex > 360)
                     {
-                        this.RainbowIndex = 0;
+                        RainbowIndex = 0;
                     }
                 }
                 else
                 {
-                    this.RainbowIndex = 0;
+                    RainbowIndex = 0;
                 }
             }
         }

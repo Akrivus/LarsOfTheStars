@@ -14,6 +14,7 @@ namespace LarsOfTheStars.Source.Client
 {
     public class Display : RenderWindow
     {
+        public static bool Closing;
         public static Display Instance;
         public static void Show()
         {
@@ -23,47 +24,55 @@ namespace LarsOfTheStars.Source.Client
             Game.ClientPlayer2 = new RenderPlayer(Game.ServerPlayer2);
             Instance = new Display();
         }
-
         private Menu StartScreen = new Menu();
         private Play GameScreen = new Play();
         private Stopwatch FrameTimer = new Stopwatch();
         private Stopwatch SpecTimer = new Stopwatch();
         private Stopwatch CallTimer = new Stopwatch();
+        private bool TrailMode = false;
         private double FrameCount = 0;
         private long FrameIndex = 0;
         public float FrameDelta = 1;
         public float SpeedFactor = 1;
-        public Display() : base(new VideoMode(Game.Configs.ScreenWidth, Game.Configs.ScreenHeight), Game.Name, Game.Configs.Fullscreen ? Styles.Fullscreen : Game.Style)
+        public float IdealSpeedFactor = 1;
+        public Display() : base(Game.Configs.Fullscreen ? VideoMode.DesktopMode : new VideoMode(Game.Configs.ScreenWidth, Game.Configs.ScreenHeight), Game.Name + " [FPS: 60 | Δ: 1.000000]", Game.Configs.Fullscreen ? Styles.Fullscreen : Game.Style)
         {
-            this.SetIcon(24, 24, new Image(Environment.CurrentDirectory + "/assets/icon.png").Pixels);
-            this.SetView(new View(new Vector2f(128, 96), new Vector2f(256, 192)));
-            this.SetVerticalSyncEnabled(Game.Configs.VSync);
-            this.SetFramerateLimit(Game.Configs.FrameRate);
-            this.KeyReleased += this.OnKeyReleased;
-            this.GainedFocus += this.OnGainedFocus;
-            this.LostFocus += this.OnLostFocus;
-            this.Resized += this.OnResized;
-            this.Closed += this.OnClosed;
-            this.FrameTimer.Start();
-            this.SpecTimer.Start();
-            this.CallTimer.Start();
-            while (this.IsOpen())
+            SetIcon(24, 24, new Image(Environment.CurrentDirectory + "/assets/icon.png").Pixels);
+            SetView(new View(new Vector2f(128, 96), new Vector2f(256, 192)));
+            SetVerticalSyncEnabled(Game.Configs.VSync);
+            SetFramerateLimit(Game.Configs.FrameRate);
+            KeyReleased += OnKeyReleased;
+            GainedFocus += OnGainedFocus;
+            LostFocus += OnLostFocus;
+            Resized += OnResized;
+            Closed += OnClosed;
+            AdjustView();
+            FrameTimer.Start();
+            SpecTimer.Start();
+            CallTimer.Start();
+            while (IsOpen())
             {
-                this.DispatchEvents();
-                Sounds.UpdatePlaylist();
+                DispatchEvents();
                 Discord.Invoke();
                 Joystick.Update();
                 if (!Game.IsPaused)
                 {
-                    this.Clear(Color.Black);
+                    if (!TrailMode)
+                    {
+                        Clear(Color.Black);
+                    }
+                    if (StartScreen.SplashTimer.ElapsedMilliseconds > 15000)
+                    {
+                        Sounds.UpdatePlaylist();
+                    }
                     if (Game.IsOnStartScreen)
                     {
-                        this.StartScreen.Render(this);
+                        StartScreen.Render(this);
                     }
                     else
                     {
                         Game.Mode.PreRender(this);
-                        this.GameScreen.Render(this);
+                        GameScreen.Render(this);
                         for (int i = 0; i < Game.ClientEntities.Count; ++i)
                         {
                             if (!Game.ClientEntities[i].SafeToDelete())
@@ -78,21 +87,22 @@ namespace LarsOfTheStars.Source.Client
                         Game.Mode.Update(this);
                         Game.Mode.PostRender(this);
                     }
-                    this.Display();
+                    Display();
                 }
-                Debug.LastFrameTime = this.FrameTimer.Elapsed.TotalSeconds;
+                Debug.LastFrameTime = FrameTimer.Elapsed.TotalSeconds;
                 Debug.FrameTimes.Add(Debug.LastFrameTime);
-                this.FrameDelta = (float)(this.FrameTimer.Elapsed.TotalSeconds / 0.01666666666) * this.SpeedFactor;
-                this.FrameCount += this.FrameTimer.Elapsed.TotalSeconds;
-                this.FrameIndex += 1;
-                this.FrameTimer.Restart();
+                FrameDelta = (float)(FrameTimer.Elapsed.TotalSeconds / 0.01666666666) * SpeedFactor;
+                FrameCount += FrameTimer.Elapsed.TotalSeconds;
+                FrameIndex += 1;
+                FrameTimer.Restart();
                 int load = 0;
-                if (this.FrameCount > 1)
+                if (FrameCount > 1)
                 {
-                    Game.FramesPerSecond = this.FrameIndex;
-                    Debug.FrameRates.Add(this.FrameIndex);
-                    this.FrameCount = 0;
-                    this.FrameIndex = 0;
+                    SetTitle(Game.Name + " [FPS: " + FrameIndex + " | Δ: " + string.Format("{0:0.000000}", FrameDelta) + "]");
+                    Game.FramesPerSecond = FrameIndex;
+                    Debug.FrameRates.Add(FrameIndex);
+                    FrameCount = 0;
+                    FrameIndex = 0;
                     for (int i = 0; i < Game.ServerEntities.Count; ++i)
                     {
                         Model model = Game.ServerEntities[i];
@@ -106,27 +116,43 @@ namespace LarsOfTheStars.Source.Client
                     }
                     if (load > 0)
                     {
-                        Debug.LastSweepTime = this.FrameTimer.Elapsed.TotalSeconds;
+                        Debug.LastSweepTime = FrameTimer.Elapsed.TotalSeconds;
                         Debug.SweepTimes.Add(Debug.LastSweepTime);
                         Debug.LastSweepLoad = load;
                         Debug.SweepLoads.Add(Debug.LastSweepLoad);
                     }
                 }
+                if (IdealSpeedFactor < SpeedFactor)
+                {
+                    SpeedFactor -= FrameDelta / 2;
+                    if (Math.Abs(SpeedFactor - IdealSpeedFactor) < FrameDelta)
+                    {
+                        SpeedFactor = IdealSpeedFactor;
+                    }
+                }
+                if (IdealSpeedFactor > SpeedFactor)
+                {
+                    SpeedFactor += FrameDelta / 2;
+                    if (Math.Abs(SpeedFactor - IdealSpeedFactor) < FrameDelta)
+                    {
+                        SpeedFactor = IdealSpeedFactor;
+                    }
+                }
                 if (Game.Stopped)
                 {
-                    this.Close();
+                    PreClose();
                 }
-                if (this.CallTimer.ElapsedMilliseconds > 20000)
+                if (CallTimer.ElapsedMilliseconds > 1000)
                 {
                     Debug.SnapshotDemoninator += 1;
                     Debug.AverageSweepTime = Debug.SweepTimes.Count > 0 ? Debug.SweepTimes.Average() : 0;
                     Debug.AverageSweepLoad = Debug.SweepLoads.Count > 0 ? Debug.SweepLoads.Average() : 0;
                     Debug.AverageFrameTime = Debug.FrameTimes.Count > 0 ? Debug.FrameTimes.Average() : 0;
                     Debug.AverageFrameRate = Debug.FrameRates.Count > 0 ? Debug.FrameRates.Average() : 0;
-                    Debug.LogSnapshot();
-                    this.CallTimer.Restart();
+                    CallTimer.Restart();
                 }
             }
+            PreClose();
         }
         private void OnKeyReleased(object sender, KeyEventArgs e)
         {
@@ -136,10 +162,23 @@ namespace LarsOfTheStars.Source.Client
                     Game.IsPaused = !Game.IsPaused;
                     break;
                 case Keyboard.Key.F1:
-                    this.Capture().SaveToFile(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "LarsOfTheStars", string.Format("{0}-{1}-{2}_{3}.{4}.{5}.png", DateTime.Now.Year.ToString().PadLeft(2, '0'), DateTime.Now.Month.ToString().PadLeft(2, '0'), DateTime.Now.Day.ToString().PadLeft(2, '0'), DateTime.Now.Hour.ToString().PadLeft(2, '0'), DateTime.Now.Minute.ToString().PadLeft(2, '0'), DateTime.Now.Second.ToString().PadLeft(2, '0'))));
+                    Game.IsOnStartScreen = true;
                     break;
                 case Keyboard.Key.F2:
-                    Game.IsOnStartScreen = true;
+                    Capture().SaveToFile(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "LarsOfTheStars", string.Format("{0}-{1}-{2}_{3}.{4}.{5}.png", DateTime.Now.Year.ToString().PadLeft(2, '0'), DateTime.Now.Month.ToString().PadLeft(2, '0'), DateTime.Now.Day.ToString().PadLeft(2, '0'), DateTime.Now.Hour.ToString().PadLeft(2, '0'), DateTime.Now.Minute.ToString().PadLeft(2, '0'), DateTime.Now.Second.ToString().PadLeft(2, '0'))));
+                    Debug.LogSnapshot();
+                    break;
+                case Keyboard.Key.F3:
+                    TrailMode = !TrailMode;
+                    break;
+                case Keyboard.Key.PageUp:
+                    IdealSpeedFactor = 2.0F;
+                    break;
+                case Keyboard.Key.Home:
+                    IdealSpeedFactor = 1.0F;
+                    break;
+                case Keyboard.Key.PageDown:
+                    IdealSpeedFactor = 0.1F;
                     break;
                 default:
                     break;
@@ -155,11 +194,36 @@ namespace LarsOfTheStars.Source.Client
         }
         private void OnResized(object sender, SizeEventArgs e)
         {
-            this.GetView().Zoom(e.Height / 192);
+            AdjustView();
+        }
+        private void AdjustView()
+        {
+            View View = new View(new Vector2f(128, 96), new Vector2f(256, 192));
+            Vector2f ViewportSize = new Vector2f(Size.X, Size.Y);
+            if (Size.X > Size.Y)
+            {
+                ViewportSize = new Vector2f(Size.Y * 1.333333F, Size.Y);
+            }
+            else
+            {
+                ViewportSize = new Vector2f(Size.X, Size.X / 1.333333F);
+            }
+            Vector2f Offset = new Vector2f((1 - (ViewportSize.X / Size.X)) / 2, (1 - (ViewportSize.Y / Size.Y)) / 2);
+            View.Viewport = new FloatRect(Offset.X, Offset.Y, ViewportSize.X / Size.X, ViewportSize.Y / Size.Y);
+            SetView(View);
         }
         private void OnClosed(object sender, EventArgs e)
         {
-            this.Close();
+            PreClose();
+        }
+        private void PreClose()
+        {
+            if (!Closing)
+            {
+                Closing = true;
+                Discord.Close();
+                Close();
+            }
         }
     }
 }

@@ -22,16 +22,13 @@ namespace LarsOfTheStars.Source
         public static double LastFrameTime = 0;
         public static void Initialize()
         {
-            Directory.CreateDirectory("debug");
-            Directory.CreateDirectory("debug/snapshots");
             Directory.CreateDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "LarsOfTheStars"));
-            Stream stream = new FileStream(Path.Combine("debug", "system.txt"), FileMode.OpenOrCreate);
+            Stream stream = new FileStream(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "LarsOfTheStars", "Debug.log"), FileMode.OpenOrCreate);
             stream = GenerateSystemInfo(stream);
         }
         public static void LogSnapshot()
         {
-            string filename = string.Format("ss-{0}{1}{2}{3}{4}{5}.txt", DateTime.Now.Year.ToString().PadLeft(2, '0'), DateTime.Now.Month.ToString().PadLeft(2, '0'), DateTime.Now.Day.ToString().PadLeft(2, '0'), DateTime.Now.Hour.ToString().PadLeft(2, '0'), DateTime.Now.Minute.ToString().PadLeft(2, '0'), DateTime.Now.Second.ToString().PadLeft(2, '0'));
-            Stream stream = new FileStream(Path.Combine("debug", "snapshots", filename), FileMode.OpenOrCreate);
+            Stream stream = new FileStream(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "LarsOfTheStars", string.Format("{0}-{1}-{2}_{3}.{4}.{5}.log", DateTime.Now.Year.ToString().PadLeft(2, '0'), DateTime.Now.Month.ToString().PadLeft(2, '0'), DateTime.Now.Day.ToString().PadLeft(2, '0'), DateTime.Now.Hour.ToString().PadLeft(2, '0'), DateTime.Now.Minute.ToString().PadLeft(2, '0'), DateTime.Now.Second.ToString().PadLeft(2, '0'))), FileMode.OpenOrCreate);
             stream = GenerateSnapshot(stream);
         }
         public static Stream GenerateSnapshot(Stream output)
@@ -50,21 +47,8 @@ namespace LarsOfTheStars.Source
             writer.WriteLine("Average Frame Time:\t" + (decimal)(AverageFrameTime) + "s");
             writer.WriteLine("Average Frame Rate:\t" + (decimal)(AverageFrameRate) + "/s");
             writer.WriteLine("====\tGAME INFO");
-            for (int i = 0; i < Game.ServerEntities.Count || i < Game.ClientEntities.Count; ++i)
-            {
-                if (i < Game.ServerEntities.Count && i < Game.ClientEntities.Count)
-                {
-                    writer.WriteLine("SERVER " + Game.ServerEntities[i].ToString() + "\r\nCLIENT " + Game.ClientEntities[i].ToString());
-                }
-                else if (i < Game.ServerEntities.Count)
-                {
-                    writer.WriteLine("SERVER " + Game.ServerEntities[i].ToString());
-                }
-                else
-                {
-                    writer.WriteLine("CLIENT " + Game.ClientEntities[i].ToString());
-                }
-            }
+            writer.WriteLine("Client Count:\t\t" + Game.ClientEntities.Count);
+            writer.WriteLine("Server Count:\t\t" + Game.ServerEntities.Count);
             writer.Flush();
             writer.Close();
             return output;

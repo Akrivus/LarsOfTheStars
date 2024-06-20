@@ -1,5 +1,4 @@
-﻿using LarsOfTheStars.Source.Integration.REST;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using DiscordRPC;
 using DiscordRPC.Message;
 
@@ -10,11 +9,14 @@ namespace LarsOfTheStars.Source.Integration
         private static string ID = "459433736249802762";
         private static Stopwatch CoolTimer = new Stopwatch();
         private static DiscordRpcClient RPC;
+        public static RichPresence LastRP;
         public static RichPresence RP;
-        public static Entry You;
+        public static User You;
+        public static bool PushUpdate;
         public static bool IsReady;
         public static void Start()
         {
+            CoolTimer.Start();
             if (Game.Configs.DiscordRPC)
             {
                 RPC = new DiscordRpcClient(ID, true);
@@ -45,33 +47,22 @@ namespace LarsOfTheStars.Source.Integration
         }
         public static void Update()
         {
-            if (Game.Configs.DiscordRPC && IsReady && (CoolTimer.ElapsedMilliseconds > 5000 || !CoolTimer.IsRunning))
+            if (Game.Configs.DiscordRPC && IsReady)
             {
-
-                if (RP.Details != null && RP.State != null && RP.Party != null)
-                {
-                    RichPresence presence = new RichPresence();
-                    presence.Details = RP.Details;
-                    presence.State = RP.State;
-                    presence.Assets = RP.Assets;
-                    presence.Party = RP.Party;
-                    RPC.SetPresence(RP);
-                    if (CoolTimer.IsRunning)
-                    {
-                        CoolTimer.Restart();
-                    }
-                    else
-                    {
-                        CoolTimer.Start();
-                    }
-                    Database.TryAgain = 0;
-                }
+                RichPresence presence = new RichPresence();
+                presence.Details = RP.Details;
+                presence.State = RP.State;
+                presence.Assets = RP.Assets;
+                presence.Party = RP.Party;
+                RPC.SetPresence(RP);
+                PushUpdate = false;
             }
         }
         public static void Close()
         {
             if (Game.Configs.DiscordRPC && IsReady)
             {
+                IsReady = false;
                 RPC.Dispose();
             }
         }
@@ -82,7 +73,15 @@ namespace LarsOfTheStars.Source.Integration
                 if (Game.Configs.DiscordRPC)
                 {
                     RPC.Invoke();
-                    Update();
+                    Game.Mode?.GetRPC();
+                    if (CoolTimer.ElapsedMilliseconds > 1000)
+                    {
+                        if (PushUpdate && !Game.IsPaused)
+                        {
+                            Update();
+                        }
+                        CoolTimer.Restart();
+                    }
                 }
             }
             catch
@@ -92,13 +91,8 @@ namespace LarsOfTheStars.Source.Integration
         }
         private static void OnReady(object sender, ReadyMessage args)
         {
-            You = new Entry();
-            You.ID = args.User.ID;
-            You.Username = args.User.Username;
-            You.Discriminator = args.User.Discriminator.ToString().PadLeft(4, '0');
-            You.Score = 0;
+            You = args.User;
             IsReady = true;
-            Database.SetScore(0);
         }
         private static void OnClose(object sender, CloseMessage args)
         {

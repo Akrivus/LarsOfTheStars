@@ -1,9 +1,11 @@
 ﻿using LarsOfTheStars.Source.Client;
+using LarsOfTheStars.Source.Integration;
 
 namespace LarsOfTheStars.Source.Logic.Modes
 {
     public class Mode
     {
+        public int Level = 1;
         public virtual void Start()
         {
 
@@ -21,6 +23,10 @@ namespace LarsOfTheStars.Source.Logic.Modes
 
         }
         public virtual void Interact(int rank, int type)
+        {
+
+        }
+        public virtual void GetRPC()
         {
 
         }

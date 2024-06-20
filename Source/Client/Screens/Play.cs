@@ -13,22 +13,22 @@ namespace LarsOfTheStars.Source.Client.Screens
             for (int i = 0; i < MAX_STARS; ++i)
             {
                 float starSize = (float)(Game.RNG.NextDouble() + 0.5);
-                this.Stars[i] = new Sprite(Textures.Load("star.png"));
-                this.Stars[i].Position = new Vector2f(Game.RNG.Next(0, 256), Game.RNG.Next(0, 192));
-                this.Stars[i].Color = new Color(255, 255, 255, (byte)(Game.RNG.Next(255)));
-                this.Stars[i].Scale = new Vector2f(starSize, starSize);
+                Stars[i] = new Sprite(Textures.Load("star.png"));
+                Stars[i].Position = new Vector2f(Game.RNG.Next(0, 256), Game.RNG.Next(0, 192));
+                Stars[i].Color = new Color(255, 255, 255, (byte)(Game.RNG.Next(255)));
+                Stars[i].Scale = new Vector2f(starSize, starSize);
             }
         }
         public void Render(Display target)
         {
             for (int i = 0; i < MAX_STARS; ++i)
             {
-                this.Stars[i].Position = new Vector2f(this.Stars[i].Position.X, this.Stars[i].Position.Y + target.FrameDelta);
-                if (this.Stars[i].Position.Y > 200)
+                Stars[i].Position = new Vector2f(Stars[i].Position.X, Stars[i].Position.Y + target.FrameDelta);
+                if (Stars[i].Position.Y > 200)
                 {
-                    this.Stars[i].Position = new Vector2f(this.Stars[i].Position.X, Game.RNG.Next(12) * -1);
+                    Stars[i].Position = new Vector2f(Stars[i].Position.X, Game.RNG.Next(12) * -1);
                 }
-                this.Stars[i].Draw(target, RenderStates.Default);
+                Stars[i].Draw(target, RenderStates.Default);
             }
         }
     }

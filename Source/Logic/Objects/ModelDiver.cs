@@ -17,93 +17,94 @@ namespace LarsOfTheStars.Source.Logic.Objects
         public Vector2f LastPosition = new Vector2f(0, 0);
         public ModelDiver(float x = 0, float y = 0) : base(x, y, Game.RNG.Next(-45, 45))
         {
+            MaxDamage = 1 * (Game.Mode.Level / 20 + 1);
             if (Game.Mode.IsMultiUser())
             {
                 if (Game.RNG.Next(2) == 0)
                 {
-                    this.Destination = new Vector2f(Game.ServerPlayer1.Position.X, Game.ServerPlayer1.Position.Y + Game.RNG.Next(16) - 8);
+                    Destination = new Vector2f(Game.ServerPlayer1.Position.X, Game.ServerPlayer1.Position.Y + Game.RNG.Next(16) - 8);
                 }
                 else
                 {
-                    this.Destination = new Vector2f(Game.ServerPlayer2.Position.X, Game.ServerPlayer2.Position.Y + Game.RNG.Next(16) - 8);
+                    Destination = new Vector2f(Game.ServerPlayer2.Position.X, Game.ServerPlayer2.Position.Y + Game.RNG.Next(16) - 8);
                 }
             }
             else
             {
-                this.Destination = new Vector2f(Game.ServerPlayer1.Position.X, Game.ServerPlayer1.Position.Y + Game.RNG.Next(16) - 8);
+                Destination = new Vector2f(Game.ServerPlayer1.Position.X, Game.ServerPlayer1.Position.Y + Game.RNG.Next(16) - 8);
             }
-            this.DiveRight = this.Destination.X < 128;
-            this.Buffer = Math.Max(40, Game.RNG.Next(256 - (int)(this.Destination.X)));
-            this.Position = new Vector2f(this.GeneratePosition(), 0);
-            if (Math.Abs(this.Destination.X - this.Position.X) < 40)
+            DiveRight = Destination.X < 128;
+            Buffer = Math.Max(40, Game.RNG.Next(256 - (int)(Destination.X)));
+            Position = new Vector2f(GeneratePosition(), 0);
+            if (Math.Abs(Destination.X - Position.X) < 40)
             {
-                this.Buffer = Math.Max(40, Game.RNG.Next(256 - (int)(this.Destination.X)));
-                this.GeneratePosition();
+                Buffer = Math.Max(40, Game.RNG.Next(256 - (int)(Destination.X)));
+                GeneratePosition();
             }
-            this.Start = this.Position;
+            Start = Position;
         }
         private float GeneratePosition()
         {
             float NewX = 0;
-            if (this.DiveRight)
+            if (DiveRight)
             {
-                NewX = this.Destination.X + this.Buffer;
+                NewX = Destination.X + Buffer;
             }
             else
             {
-                NewX = this.Destination.X - this.Buffer;
+                NewX = Destination.X - Buffer;
             }
             return NewX;
         }
         public override void Update(Display target)
         {
             base.Update(target);
-            if (this.IsNotDead() && Game.ServerPlayer1.Buff != ModelPlayer.PowerUp.FREEZE_ALL_SHIPS)
+            if (IsNotDead() && Game.ServerPlayer1.Buff != ModelPlayer.PowerUp.FREEZE_ALL_SHIPS)
             {
-                float NewX = this.Position.X + (target.FrameDelta * 0.5F) * (this.DiveRight ? -1 : 1);
-                float NewY = -(this.Destination.Y) * (NewX - (this.Destination.X + this.Buffer)) * (NewX - (this.Destination.X - this.Buffer)); NewY = NewY / (this.Buffer * this.Buffer);
-                if (NewY - this.LastPosition.Y > 96)
+                float NewX = Position.X + (target.FrameDelta * 0.5F) * (DiveRight ? -1 : 1);
+                float NewY = -(Destination.Y) * (NewX - (Destination.X + Buffer)) * (NewX - (Destination.X - Buffer)); NewY = NewY / (Buffer * Buffer);
+                if (NewY - LastPosition.Y > 96)
                 {
-                    this.Deactivated = true;
+                    Deactivated = true;
                 }
                 else
                 {
-                    this.LastPosition = this.Position;
+                    LastPosition = Position;
                 }
-                this.Position = new Vector2f(NewX, NewY);
-                this.Rotation = (float)(Math.Atan2(-2 * this.Destination.Y * (NewX - this.Destination.X) / (this.Buffer * this.Buffer), 1)) * 57.2957795131F;
-                this.Rotation = this.Rotation + (this.DiveRight ? 90 : 270);
-                if (this.IsCollidingWithPlayer1())
+                Position = new Vector2f(NewX, NewY);
+                Rotation = (float)(Math.Atan2(-2 * Destination.Y * (NewX - Destination.X) / (Buffer * Buffer), 1)) * 57.2957795131F;
+                Rotation = Rotation + (DiveRight ? 90 : 270);
+                if (IsCollidingWithPlayer1())
                 {
                     Game.ServerPlayer1.DamagePlayer(1);
                     Sounds.Play("boom.ogg");
-                    this.Kill();
+                    Kill();
                 }
-                if (this.IsCollidingWithPlayer2())
+                if (IsCollidingWithPlayer2())
                 {
                     Game.ServerPlayer2.DamagePlayer(1);
                     Sounds.Play("boom.ogg");
-                    this.Kill();
+                    Kill();
                 }
             }
         }
         public override void OnDeath()
         {
-            if (!this.OutsideOfScreen())
+            if (!OutsideOfScreen())
             {
                 for (int i = 0; i < 4; ++i)
                 {
-                    Game.AddEntity(new RenderGib(new ModelGib(this.Position.X + (Game.RNG.Next(16) - 8), this.Position.Y + (Game.RNG.Next(16) - 8), "diver", i)));
+                    Game.AddEntity(new RenderGib(new ModelGib(Position.X + (Game.RNG.Next(16) - 8), Position.Y + (Game.RNG.Next(16) - 8), "diver", i)));
                     for (int j = 0; j < Game.Configs.MaxParticles / 10; ++j)
                     {
-                        Game.AddEntity(new RenderParticle(new ModelParticle(this.Position.X + (Game.RNG.Next(16) - 8), this.Position.Y + (Game.RNG.Next(16) - 8), Game.RNG.Next(360), Color.White)));
+                        Game.AddEntity(new RenderParticle(new ModelParticle(Position.X + (Game.RNG.Next(16) - 8), Position.Y + (Game.RNG.Next(16) - 8), Game.RNG.Next(360), Color.White)));
                     }
                 }
             }
         }
         public override bool CanBeSwept()
         {
-            return !this.Deactivated;
+            return !Deactivated;
         }
     }
 }

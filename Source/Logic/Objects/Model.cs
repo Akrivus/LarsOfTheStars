@@ -3,11 +3,15 @@ using LarsOfTheStars.Source.Client.Objects;
 using LarsOfTheStars.Source.Files;
 using SFML.Graphics;
 using SFML.Window;
+using System;
+using System.Diagnostics;
 
 namespace LarsOfTheStars.Source.Logic.Objects
 {
     public class Model
     {
+        public Guid GlobalID = Guid.NewGuid();
+        public Stopwatch LifeTimer = new Stopwatch();
         public FloatRect BoundingBox;
         public Vector2f Position;
         public float Rotation;
@@ -16,57 +20,59 @@ namespace LarsOfTheStars.Source.Logic.Objects
         public float Damage;
         public Model(float x, float y, float rotation = 0)
         {
-            this.Position = new Vector2f(x, y);
-            this.Rotation = rotation;
+            LifeTimer.Start();
+            Position = new Vector2f(x, y);
+            Rotation = rotation;
         }
         public Vector2f GetPosition()
         {
-            return new Vector2f(this.Position.X, this.Position.Y);
+            return new Vector2f(Position.X, Position.Y);
         }
         public virtual void Update(Display target)
         {
-            if (this.OutsideOfScreen())
+            if (OutsideOfScreen())
             {
-                this.Kill();
+                Kill();
             }
         }
         public void Move(float x, float y, float delta, bool keepAlive = true)
         {
-            Vector2f OldPosition = this.Position;
-            this.Position = new Vector2f(this.Position.X + (x * delta), this.Position.Y + (y * delta));
-            if (this.OutsideOfScreen() && keepAlive)
+            Vector2f OldPosition = Position;
+            Position = new Vector2f(Position.X + (x * delta), Position.Y + (y * delta));
+            if (OutsideOfScreen() && keepAlive)
             {
-                this.Position = OldPosition;
+                Position = OldPosition;
             }
         }
         public void Left(float x, float delta, bool keepAlive = true)
         {
-            this.Move(-x, 0, delta, keepAlive);
+            Move(-x, 0, delta, keepAlive);
         }
         public void Right(float x, float delta, bool keepAlive = true)
         {
-            this.Move(x, 0, delta, keepAlive);
+            Move(x, 0, delta, keepAlive);
         }
         public void Kill()
         {
-            if (!this.Deactivated)
+            if (!Deactivated)
             {
-                if (this.OutsideOfScreen())
+                if (OutsideOfScreen())
                 {
-                    this.OnDespawn();
+                    OnDespawn();
                 }
                 else
                 {
-                    this.OnDeath();
+                    OnDeath();
                 }
-                this.Deactivated = true;
+                Deactivated = true;
             }
         }
         public virtual void OnDespawn()
         {
-            if (this.CanBeSwept())
+            if (CanBeSwept())
             {
                 Game.Mode.Interact(1, -2);
+                Game.Mode.Interact(2, -2);
             }
         }
         public virtual void OnDeath()
@@ -75,16 +81,16 @@ namespace LarsOfTheStars.Source.Logic.Objects
         }
         public virtual bool OnLaserHit(ModelLaser laser)
         {
-            if (this.CanBeSwept())
+            if (CanBeSwept())
             {
                 if (laser.OwnedByPlayer)
                 {
-                    this.Damage += laser.FlashRainbowColors ? this.MaxDamage : 1;
-                    if (this.Damage >= this.MaxDamage)
+                    Damage += laser.FlashRainbowColors ? 3 : 1;
+                    if (Damage >= MaxDamage)
                     {
-                        Game.Mode.Interact(1, 1);
+                        Game.Mode.Interact(laser.Rank, 1);
                         Sounds.Play("death.ogg");
-                        this.Kill();
+                        Kill();
                     }
                     else
                     {
@@ -105,32 +111,32 @@ namespace LarsOfTheStars.Source.Logic.Objects
         }
         public virtual bool IsDead()
         {
-            return this.Damage >= this.MaxDamage || (this.Damage >= this.MaxDamage && this.OutsideOfScreen());
+            return Damage >= MaxDamage || (Damage >= MaxDamage && OutsideOfScreen());
         }
         public bool IsNotDead()
         {
-            return !this.IsDead();
+            return !IsDead();
         }
         public bool IsCollidingWithPlayer1()
         {
-            return this.IsCollidingWith(Game.ServerPlayer1);
+            return IsCollidingWith(Game.ServerPlayer1);
         }
         public bool IsCollidingWithPlayer2()
         {
-            return this.IsCollidingWith(Game.ServerPlayer2);
+            return IsCollidingWith(Game.ServerPlayer2);
         }
         public bool IsCollidingWith(Model model)
         {
-            if (this.GetHashCode() != model.GetHashCode() && this.BoundingBox.Left > 0)
+            if (GetHashCode() != model.GetHashCode() && BoundingBox.Left > 0)
             {
-                return this.BoundingBox.Intersects(model.BoundingBox) && model.IsNotDead();
+                return BoundingBox.Intersects(model.BoundingBox) && model.IsNotDead();
             }
             return false;
         }
-        public bool OutsideOfScreen()
+        public virtual bool OutsideOfScreen()
         {
-            float X = this.Position.X;
-            float Y = this.Position.Y;
+            float X = Position.X;
+            float Y = Position.Y;
             return (X > 256) || (X < 0) 
                 || (Y > 192) || (Y < 0);
         }

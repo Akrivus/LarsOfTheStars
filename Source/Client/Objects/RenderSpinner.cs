@@ -10,18 +10,18 @@ namespace LarsOfTheStars.Source.Client.Objects
         private Sprite Spinner;
         public RenderSpinner(ModelSpinner model) : base(model)
         {
-            this.Spinner = new Sprite(Textures.Load("enemies", "spinner_1.png"));
-            this.Spinner.Origin = new Vector2f(this.Spinner.Texture.Size.X / 2, this.Spinner.Texture.Size.Y / 2);
-            this.Spinner.Scale = new Vector2f(2, 2);
-            this.Sprite = new Sprite(Textures.Load("enemies", "spinner_0.png"));
-            this.Sprite.Origin = new Vector2f(this.Sprite.Texture.Size.X / 2, this.Sprite.Texture.Size.Y / 2);
-            this.Sprite.Scale = new Vector2f(2, 2);
+            Spinner = new Sprite(Textures.Load("enemies", "spinner_1.png"));
+            Spinner.Origin = new Vector2f(Spinner.Texture.Size.X / 2, Spinner.Texture.Size.Y / 2);
+            Spinner.Scale = new Vector2f(2, 2);
+            Sprite = new Sprite(Textures.Load("enemies", "spinner_0.png"));
+            Sprite.Origin = new Vector2f(Sprite.Texture.Size.X / 2, Sprite.Texture.Size.Y / 2);
+            Sprite.Scale = new Vector2f(2, 2);
         }
         public override void Update(Display target)
         {
-            this.Spinner.Position = this.Base.Position;
-            this.Spinner.Rotation = this.Spinner.Rotation + target.FrameDelta;
-            this.Spinner.Draw(target, RenderStates.Default);
+            Spinner.Position = Base.Position;
+            Spinner.Rotation = Spinner.Rotation + target.FrameDelta;
+            Spinner.Draw(target, RenderStates.Default);
             base.Update(target);
         }
     }
