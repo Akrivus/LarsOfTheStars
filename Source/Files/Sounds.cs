@@ -7,7 +7,7 @@ namespace LarsOfTheStars.Source.Files
 {
     public class Sounds
     {
-        private static int GLOBAL_BUFFER_COUNT = 40;
+        private static int GLOBAL_BUFFER_COUNT = Game.Configs.MaxSounds;
         private static float GLOBAL_PITCH = 1.0F;
         private static List<Sound> GLOBAL_BUFFERS = new List<Sound>();
         private static Dictionary<String, SoundBuffer> LOADED_BUFFERS = new Dictionary<String, SoundBuffer>();
@@ -27,13 +27,14 @@ namespace LarsOfTheStars.Source.Files
         }
         public static void Play(params string[] paths)
         {
+            int begin = 0; int end = GLOBAL_BUFFER_COUNT;
             string path = Locator.Get("sounds", paths);
             if (!LOADED_BUFFERS.ContainsKey(path))
             {
                 LOADED_BUFFERS[path] = new SoundBuffer(path);
             }
             SoundBuffer buffer = LOADED_BUFFERS[path];
-            for (int i = 0; i < GLOBAL_BUFFER_COUNT; ++i)
+            for (int i = begin; i < end; ++i)
             {
                 if (GLOBAL_BUFFERS[i].Status == SoundStatus.Stopped)
                 {
@@ -43,13 +44,6 @@ namespace LarsOfTheStars.Source.Files
                     return;
                 }
             }
-        }
-        public static void PlayRandom(params string[] paths)
-        {
-            string path = Locator.Get("sounds", paths);
-            string[] files = Directory.GetFiles(path);
-            string file = files[Game.RNG.Next(files.Length)];
-            Play(Locator.Get(path, Path.GetFileName(file)));
         }
         public static void StopAllSounds()
         {

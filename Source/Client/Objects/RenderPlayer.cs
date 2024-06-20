@@ -17,122 +17,122 @@ namespace LarsOfTheStars.Source.Client.Objects
         private Stopwatch FireTimer = new Stopwatch();
         public RenderPlayer(ModelPlayer model) : base(model)
         {
-            this.Sprite = new Sprite(Textures.Load("player", (model.Rank == 1 ?  "incinerator.png" : "skipper.png")));
-            this.Decal = new Sprite(Textures.Load("player", "decal_" + model.Rank + ".png"));
-            this.Sprite.Origin = new Vector2f(this.Sprite.Texture.Size.X / 2, this.Sprite.Texture.Size.Y / 2);
-            this.Sprite.Scale = new Vector2f(2, 2);
-            this.Decal.Origin = new Vector2f(this.Decal.Texture.Size.X / 2, this.Decal.Texture.Size.Y / 2);
-            this.Decal.Scale = new Vector2f(2, 2);
-            this.FireTimer.Start();
+            Sprite = new Sprite(Textures.Load("player", (model.Rank == 1 ?  "incinerator.png" : "skipper.png")));
+            Decal = new Sprite(Textures.Load("player", "decal_" + model.Rank + ".png"));
+            Sprite.Origin = new Vector2f(Sprite.Texture.Size.X / 2, Sprite.Texture.Size.Y / 2);
+            Sprite.Scale = new Vector2f(2, 2);
+            Decal.Origin = new Vector2f(Decal.Texture.Size.X / 2, Decal.Texture.Size.Y / 2);
+            Decal.Scale = new Vector2f(2, 2);
+            FireTimer.Start();
             for (int i = 0; i < MAX_PARTICLES; ++i)
             {
-                this.Particles[i] = new Sprite(Textures.Load("particles", "rocket.png"));
-                this.Particles[i].Position = new Vector2f(model.Position.X + (Game.RNG.Next(12) - 8), model.Position.Y + 20 + (Game.RNG.Next(8) - 4));
-                this.Particles[i].Origin = new Vector2f(this.Particles[i].Texture.Size.X / 2, this.Particles[i].Texture.Size.Y / 2);
+                Particles[i] = new Sprite(Textures.Load("particles", "rocket.png"));
+                Particles[i].Position = new Vector2f(model.Position.X + (Game.RNG.Next(12) - 8), model.Position.Y + 20 + (Game.RNG.Next(8) - 4));
+                Particles[i].Origin = new Vector2f(Particles[i].Texture.Size.X / 2, Particles[i].Texture.Size.Y / 2);
             }
         }
         public override void Update(Display target)
         {
-            ModelPlayer player = (ModelPlayer)(this.Base);
+            ModelPlayer player = (ModelPlayer)(Base);
             if (player.IsNotDead())
             {
                 for (int i = 0; i < MAX_PARTICLES; ++i)
                 {
-                    this.Particles[i].Position = new Vector2f(this.Particles[i].Position.X, this.Particles[i].Position.Y + target.FrameDelta * 2);
-                    if (Math.Abs(this.Particles[i].Position.Y - this.Sprite.Position.Y) > Game.RNG.Next(30, 40))
+                    Particles[i].Position = new Vector2f(Particles[i].Position.X, Particles[i].Position.Y + target.FrameDelta * 2);
+                    if (Math.Abs(Particles[i].Position.Y - Sprite.Position.Y) > Game.RNG.Next(30, 40))
                     {
-                        this.Particles[i].Position = new Vector2f(this.Sprite.Position.X + (Game.RNG.Next(12) - 6), this.Sprite.Position.Y + 20 + (Game.RNG.Next(8) - 4));
-                        this.Particles[i].Color = Color.White;
+                        Particles[i].Position = new Vector2f(Sprite.Position.X + (Game.RNG.Next(12) - 6), Sprite.Position.Y + 20 + (Game.RNG.Next(8) - 4));
+                        Particles[i].Color = Color.White;
                     }
                     else
-                    if (this.Particles[i].Color.A > 0 && Game.Configs.FadeOut)
+                    if (Particles[i].Color.A > 0 && Game.Configs.FadeOut)
                     {
-                        this.Particles[i].Color = new Color(255, 255, 255, (byte)((double)(this.Particles[i].Color.A) - target.FrameDelta * 20));
+                        Particles[i].Color = new Color(255, 255, 255, (byte)((double)(Particles[i].Color.A) - target.FrameDelta * 20));
                     }
-                    this.Particles[i].Draw(target, RenderStates.Default);
+                    Particles[i].Draw(target, RenderStates.Default);
                 }
             }
             base.Update(target);
             if (player.Buff != ModelPlayer.PowerUp.NONE)
             {
-                if (!this.EffectTimer.IsRunning)
+                if (!EffectTimer.IsRunning)
                 {
-                    this.EffectTimer.Start();
+                    EffectTimer.Start();
                 }
-                this.Decal.TextureRect = new IntRect(0, 0, 18, 18);
-                this.Decal.Position = new Vector2f(player.Position.X, player.Position.Y);
+                Decal.TextureRect = new IntRect(0, 0, 18, 18);
+                Decal.Position = new Vector2f(player.Position.X, player.Position.Y);
                 switch (player.Buff)
                 {
                     case ModelPlayer.PowerUp.IMMUNE_TO_HITS:
-                        this.Decal.Color = new Color(251, 173, 216);
+                        Decal.Color = new Color(251, 173, 216);
                         break;
                     case ModelPlayer.PowerUp.HYPERLASER:
-                        if (this.EffectTimer.ElapsedMilliseconds < 100)
+                        if (EffectTimer.ElapsedMilliseconds < 100)
                         {
-                            this.Decal.Color = new Color(255, 0, 0);
+                            Decal.Color = new Color(255, 0, 0);
                         }
-                        else if (this.EffectTimer.ElapsedMilliseconds < 200)
+                        else if (EffectTimer.ElapsedMilliseconds < 200)
                         {
-                            this.Decal.Color = new Color(0, 127, 255);
+                            Decal.Color = new Color(0, 127, 255);
                         }
-                        else if (this.EffectTimer.ElapsedMilliseconds < 300)
+                        else if (EffectTimer.ElapsedMilliseconds < 300)
                         {
-                            this.Decal.Color = new Color(255, 0, 255);
+                            Decal.Color = new Color(255, 0, 255);
                         }
-                        else if (this.EffectTimer.ElapsedMilliseconds < 400)
+                        else if (EffectTimer.ElapsedMilliseconds < 400)
                         {
-                            this.Decal.Color = new Color(0, 255, 0);
+                            Decal.Color = new Color(0, 255, 0);
                         }
-                        else if (this.EffectTimer.ElapsedMilliseconds < 500)
+                        else if (EffectTimer.ElapsedMilliseconds < 500)
                         {
-                            this.Decal.Color = new Color(0, 255, 255);
+                            Decal.Color = new Color(0, 255, 255);
                         }
-                        else if (this.EffectTimer.ElapsedMilliseconds < 600)
+                        else if (EffectTimer.ElapsedMilliseconds < 600)
                         {
-                            this.Decal.Color = new Color(0, 0, 255);
+                            Decal.Color = new Color(0, 0, 255);
                         }
-                        else if (this.EffectTimer.ElapsedMilliseconds < 700)
+                        else if (EffectTimer.ElapsedMilliseconds < 700)
                         {
-                            this.Decal.Color = new Color(127, 0, 255);
+                            Decal.Color = new Color(127, 0, 255);
                         }
-                        else if (this.EffectTimer.ElapsedMilliseconds < 800)
+                        else if (EffectTimer.ElapsedMilliseconds < 800)
                         {
-                            this.Decal.Color = new Color(255, 0, 255);
+                            Decal.Color = new Color(255, 0, 255);
                         }
                         else
                         {
-                            this.EffectTimer.Restart();
+                            EffectTimer.Restart();
                         }
                         break;
                     case ModelPlayer.PowerUp.MULTILASER:
-                        if (this.EffectTimer.ElapsedMilliseconds < 200)
+                        if (EffectTimer.ElapsedMilliseconds < 200)
                         {
-                            this.Decal.Color = new Color(127, 0, 255);
+                            Decal.Color = new Color(127, 0, 255);
                         }
-                        else if (this.EffectTimer.ElapsedMilliseconds < 400)
+                        else if (EffectTimer.ElapsedMilliseconds < 400)
                         {
-                            this.Decal.Color = new Color(0, 255, 0);
+                            Decal.Color = new Color(0, 255, 0);
                         }
                         else
                         {
-                            this.EffectTimer.Restart();
+                            EffectTimer.Restart();
                         }
                         break;
                     case ModelPlayer.PowerUp.DESTROY_ALL_SHIPS:
-                        this.Decal.Color = new Color(255, 127, 0);
+                        Decal.Color = new Color(255, 127, 0);
                         break;
                     case ModelPlayer.PowerUp.FREEZE_ALL_SHIPS:
-                        this.Decal.Color = new Color(0, 255, 255);
+                        Decal.Color = new Color(0, 255, 255);
                         break;
                     case ModelPlayer.PowerUp.SPEED_UP_GAME:
-                        this.Decal.Color = new Color(0, 255, 0);
+                        Decal.Color = new Color(0, 255, 0);
                         break;
                     case ModelPlayer.PowerUp.SLOW_MOTION:
-                        this.Decal.Color = new Color(127, 0, 255);
+                        Decal.Color = new Color(127, 0, 255);
                         break;
                 }
-                this.Decal.Rotation = 180;
-                this.Decal.Draw(target, RenderStates.Default);
+                Decal.Rotation = 180;
+                Decal.Draw(target, RenderStates.Default);
             }
             else
             {
@@ -140,42 +140,22 @@ namespace LarsOfTheStars.Source.Client.Objects
                 {
                     if (player.DamageTimer.ElapsedMilliseconds < 2000)
                     {
-                        if (!this.FlashTimer.IsRunning)
+                        if (!FlashTimer.IsRunning)
                         {
-                            this.FlashTimer.Start();
+                            FlashTimer.Start();
                         }
-                        else if (this.FlashTimer.ElapsedMilliseconds < 200)
+                        else if (FlashTimer.ElapsedMilliseconds < 200)
                         {
-                            this.Decal.Position = new Vector2f(player.Position.X, player.Position.Y);
-                            this.Decal.TextureRect = new IntRect(0, 0, 18, 18);
-                            this.Decal.Color = new Color(255, 255, 255);
-                            this.Decal.Rotation = 180;
-                            this.Decal.Draw(target, RenderStates.Default);
+                            Decal.Position = new Vector2f(player.Position.X, player.Position.Y);
+                            Decal.TextureRect = new IntRect(0, 0, 18, 18);
+                            Decal.Color = new Color(255, 255, 255);
+                            Decal.Rotation = 180;
+                            Decal.Draw(target, RenderStates.Default);
                         }
-                        else if (this.FlashTimer.ElapsedMilliseconds > 400)
+                        else if (FlashTimer.ElapsedMilliseconds > 400)
                         {
-                            this.FlashTimer.Restart();
+                            FlashTimer.Restart();
                         }
-                        this.Decal.TextureRect = new IntRect(0, 0, 18, (int)((1 - player.Damage / 10) * 18));
-                        this.Decal.Position = new Vector2f(player.Position.X, player.Position.Y);
-                        if (player.Rank == 1)
-                        {
-                            this.Decal.Color = new Color(255, 0, 127);
-                        }
-                        this.Decal.Rotation = 180;
-                        this.Decal.Draw(target, RenderStates.Default);
-                    }
-                    else if (this.Decal.Color.A > 0 && Game.Configs.FadeOut)
-                    {
-                        if (this.FlashTimer.IsRunning)
-                        {
-                            this.FlashTimer.Stop();
-                        }
-                        this.Decal.TextureRect = new IntRect(0, 0, 18, (int)((1 - player.Damage / 10) * 18));
-                        this.Decal.Position = new Vector2f(player.Position.X, player.Position.Y);
-                        this.Decal.Color = new Color(255, 0, 127, (byte)((double)(this.Decal.Color.A) - target.FrameDelta * 20));
-                        this.Decal.Rotation = 180;
-                        this.Decal.Draw(target, RenderStates.Default);
                     }
                 }
             }

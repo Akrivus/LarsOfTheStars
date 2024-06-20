@@ -11,16 +11,16 @@ namespace LarsOfTheStars.Source.Logic.Objects
         public int Index;
         public ModelParticle(float x, float y, float rotation, Color color) : base(x, y, rotation)
         {
-            this.Trajectory = this.Rotation;
-            this.Color = color;
+            Trajectory = Rotation;
+            Color = color;
         }
         public override void Update(Display target)
         {
             base.Update(target);
-            if (this.IsNotDead())
+            if (IsNotDead())
             {
-                this.Move((float)(Math.Sin(this.Trajectory)), (float)(Math.Cos(this.Trajectory)), target.FrameDelta, false);
-                this.Rotation += target.FrameDelta;
+                Move((float)(Math.Sin(Trajectory)), (float)(Math.Cos(Trajectory)), target.FrameDelta, false);
+                Rotation += target.FrameDelta;
             }
         }
     }

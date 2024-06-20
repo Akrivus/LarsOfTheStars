@@ -13,11 +13,18 @@ namespace LarsOfTheStars.Source.Client.Screens
         private static int MAX_STARS = Game.Configs.MaxStars;
         private Sprite[] Stars = new Sprite[MAX_STARS];
         private Sprite Logo;
-        private Sprite Mod0;
-        private Sprite Mod1;
-        private Sprite Mod2;
+        private Sprite ArcadeModeButton;
+        private Sprite TeamModeButton;
+        private Sprite ExitGameButton;
         private Sound Player = new Sound();
         public Stopwatch BlinkTimer = new Stopwatch();
+        public Stopwatch SplashTimer = new Stopwatch();
+        public Stopwatch FlashTimer = new Stopwatch();
+        private Sprite AppyDays = new Sprite(Textures.Load("appydays.png"));
+        private float AppyAlpha = 255;
+        private bool PlayedAppySound = false;
+        private Sprite InvasionButton;
+        private bool OngoingInvasion = false;
         private bool KeyboardEnabled = true;
         private int TabIndex = 0;
         public Menu()
@@ -25,160 +32,230 @@ namespace LarsOfTheStars.Source.Client.Screens
             for (int i = 0; i < MAX_STARS; ++i)
             {
                 float starSize = (float)(Game.RNG.NextDouble() + 0.5);
-                this.Stars[i] = new Sprite(Textures.Load("star.png"));
-                this.Stars[i].Position = new Vector2f(Game.RNG.Next(0, 256), Game.RNG.Next(0, 192));
-                this.Stars[i].Color = new Color(255, 255, 255, (byte)(Game.RNG.Next(255)));
-                this.Stars[i].Scale = new Vector2f(starSize, starSize);
+                Stars[i] = new Sprite(Textures.Load("star.png"));
+                Stars[i].Position = new Vector2f(Game.RNG.Next(0, 256), Game.RNG.Next(0, 192));
+                Stars[i].Color = new Color(255, 255, 255, (byte)(Game.RNG.Next(255)));
+                Stars[i].Scale = new Vector2f(starSize, starSize);
             }
-            this.Logo = new Sprite(Textures.Load("logo.png"));
-            this.Logo.Position = new Vector2f(56.5F, 20);
-            this.Mod0 = new Sprite(Textures.Load("menu", "mode_0.png"));
-            this.Mod0.Position = new Vector2f(0, 125);
-            this.Mod1 = new Sprite(Textures.Load("menu", "mode_1.png"));
-            this.Mod1.Position = new Vector2f(0, 145);
-            this.Mod2 = new Sprite(Textures.Load("menu", "mode_2.png"));
-            this.Mod2.Position = new Vector2f(0, 165);
-            this.BlinkTimer.Start();
+            Logo = new Sprite(Textures.Load("logo.png"));
+            Logo.Position = new Vector2f(56.5F, 20);
+            InvasionButton = new Sprite(Textures.Load("menu", "mode_d_0.png"));
+            InvasionButton.Position = new Vector2f(0, 105);
+            ArcadeModeButton = new Sprite(Textures.Load("menu", "mode_0.png"));
+            ArcadeModeButton.Position = new Vector2f(0, 125);
+            TeamModeButton = new Sprite(Textures.Load("menu", "mode_1.png"));
+            TeamModeButton.Position = new Vector2f(0, 145);
+            ExitGameButton = new Sprite(Textures.Load("menu", "mode_2.png"));
+            ExitGameButton.Position = new Vector2f(0, 165);
+            SplashTimer.Start();
+            BlinkTimer.Start();
+            FlashTimer.Start();
+            Discord.RP.Assets.SmallImageText = "In Menu";
+            Discord.RP.Assets.SmallImageKey = "p3";
+            Discord.RP.Details = "In Menu | Deciding";
+            Discord.PushUpdate = true;
         }
         public void Render(Display target)
         {
-            if (Game.IsFocused)
+            if (Game.IsFocused && SplashTimer.ElapsedMilliseconds > 11394)
             {
                 if (Joystick.IsButtonPressed(0, 0) || Keyboard.IsKeyPressed(Keyboard.Key.Space) || Keyboard.IsKeyPressed(Keyboard.Key.Return) || Keyboard.IsKeyPressed(Keyboard.Key.LShift))
                 {
-                    if (this.TabIndex < 2)
-                    {
-                        Sounds.Play("start.ogg");
-                        Game.IsOnStartScreen = false;
-                        Game.Mode = Game.Modes[this.TabIndex];
-                        Game.Mode.Start();
-                    }
-                    else
-                    {
-                        Game.Stopped = true;
-                    }
+                    Sounds.Play("start.ogg");
+                    Game.IsOnStartScreen = false;
+                    Game.Mode = Game.Modes[TabIndex];
+                    Game.Mode.Start();
                 }
                 else
                 {
                     if (Joystick.IsButtonPressed(0, 5) || Keyboard.IsKeyPressed(Keyboard.Key.S) || Keyboard.IsKeyPressed(Keyboard.Key.Down))
                     {
-                        if (this.KeyboardEnabled)
+                        if (KeyboardEnabled)
                         {
                             Sounds.Play("choose.ogg");
-                            this.KeyboardEnabled = false;
-                            this.TabIndex += 1;
+                            KeyboardEnabled = false;
+                            TabIndex += 1;
                         }
                     }
                     else
                     if (Joystick.IsButtonPressed(0, 4) || Keyboard.IsKeyPressed(Keyboard.Key.W) || Keyboard.IsKeyPressed(Keyboard.Key.Up))
                     {
-                        if (this.KeyboardEnabled)
+                        if (KeyboardEnabled)
                         {
                             Sounds.Play("choose.ogg");
-                            this.KeyboardEnabled = false;
-                            this.TabIndex -= 1;
+                            KeyboardEnabled = false;
+                            TabIndex -= 1;
                         }
                     }
                     else
                     {
-                        this.KeyboardEnabled = true;
+                        KeyboardEnabled = true;
                     }
-                    if (this.TabIndex < 0)
+                    if (TabIndex < 0)
                     {
-                        this.TabIndex = 2;
+                        if (OngoingInvasion)
+                        {
+                            TabIndex = 3;
+                        }
+                        else
+                        {
+                            TabIndex = 2;
+                        }
                     }
-                    if (this.TabIndex > 2)
+                    if (OngoingInvasion)
                     {
-                        this.TabIndex = 0;
+                        if (TabIndex > 3)
+                        {
+                            TabIndex = 0;
+                        }
+                    }
+                    else
+                    {
+                        if (TabIndex > 2)
+                        {
+                            TabIndex = 0;
+                        }
                     }
                 }
             }
             if (Game.Configs.AutoStart > -1)
             {
-                this.TabIndex = 0;
+                TabIndex = 0;
             }
-            Discord.RP.Assets.SmallImageText = null;
-            Discord.RP.Assets.SmallImageKey = "p3";
-            Discord.RP.Details = null;
-            Discord.RP.State = null;
             for (int i = 0; i < MAX_STARS; ++i)
             {
-                this.Stars[i].Position = new Vector2f(this.Stars[i].Position.X, this.Stars[i].Position.Y + target.FrameDelta);
-                if (this.Stars[i].Position.Y > 200)
+                Stars[i].Position = new Vector2f(Stars[i].Position.X, Stars[i].Position.Y + target.FrameDelta);
+                if (Stars[i].Position.Y > 200)
                 {
-                    this.Stars[i].Position = new Vector2f(this.Stars[i].Position.X, Game.RNG.Next(12) * -1);
+                    Stars[i].Position = new Vector2f(Stars[i].Position.X, Game.RNG.Next(12) * -1);
                 }
-                this.Stars[i].Draw(target, RenderStates.Default);
+                Stars[i].Draw(target, RenderStates.Default);
             }
-            if (this.BlinkTimer.ElapsedMilliseconds > 4000)
+            if (SplashTimer.ElapsedMilliseconds > 11394)
             {
-                long ms = this.BlinkTimer.ElapsedMilliseconds;
-                if (ms > 4050)
+                if (BlinkTimer.ElapsedMilliseconds > 4000)
                 {
-                    if (ms > 4060)
+                    long ms = BlinkTimer.ElapsedMilliseconds;
+                    if (ms > 4050)
                     {
-                        if (ms > 4260)
+                        if (ms > 4060)
                         {
-                            this.BlinkTimer.Restart();
+                            if (ms > 4260)
+                            {
+                                BlinkTimer.Restart();
+                            }
+                            else
+                            {
+                                Logo.Texture = Textures.Load("logo", "logo_3.png");
+                            }
                         }
                         else
                         {
-                            this.Logo.Texture = Textures.Load("logo", "logo_3.png");
+                            Logo.Texture = Textures.Load("logo", "logo_2.png");
                         }
                     }
                     else
                     {
-                        this.Logo.Texture = Textures.Load("logo", "logo_2.png");
+                        Logo.Texture = Textures.Load("logo", "logo_1.png");
                     }
                 }
                 else
                 {
-                    this.Logo.Texture = Textures.Load("logo", "logo_1.png");
+                    long ms = BlinkTimer.ElapsedMilliseconds;
+                    if (ms > 50)
+                    {
+                        if (ms > 100)
+                        {
+                            Logo.Texture = Textures.Load("logo", "logo_0.png");
+                        }
+                        else
+                        {
+                            Logo.Texture = Textures.Load("logo", "logo_1.png");
+                        }
+                    }
+                    else
+                    {
+                        Logo.Texture = Textures.Load("logo", "logo_2.png");
+                    }
+                }
+                Logo.Draw(target, RenderStates.Default);
+                switch (TabIndex)
+                {
+                    case 0:
+                        TeamModeButton.Texture = Textures.Load("menu", "mode_1.png"); ExitGameButton.Texture = Textures.Load("menu", "mode_2.png");
+                        ArcadeModeButton.Texture = Textures.Load("menu", "mode_0_sel.png");
+                        break;
+                    case 1:
+                        ArcadeModeButton.Texture = Textures.Load("menu", "mode_0.png"); ExitGameButton.Texture = Textures.Load("menu", "mode_2.png");
+                        TeamModeButton.Texture = Textures.Load("menu", "mode_1_sel.png");
+                        break;
+                    case 2:
+                        ArcadeModeButton.Texture = Textures.Load("menu", "mode_0.png"); TeamModeButton.Texture = Textures.Load("menu", "mode_1.png");
+                        ExitGameButton.Texture = Textures.Load("menu", "mode_2_sel.png");
+                        break;
+                    default:
+                        ArcadeModeButton.Texture = Textures.Load("menu", "mode_0.png"); TeamModeButton.Texture = Textures.Load("menu", "mode_1.png");
+                        ExitGameButton.Texture = Textures.Load("menu", "mode_2.png");
+                        break;
+                }
+                if (OngoingInvasion)
+                {
+                    if (TabIndex != 3)
+                    {
+                        if (FlashTimer.ElapsedMilliseconds > 1000)
+                        {
+                            FlashTimer.Restart();
+                        }
+                        else if (FlashTimer.ElapsedMilliseconds > 500)
+                        {
+                            InvasionButton.Texture = new Texture(Textures.Load("menu", "mode_d_1.png"));
+                        }
+                        else
+                        {
+                            InvasionButton.Texture = new Texture(Textures.Load("menu", "mode_d_0.png"));
+                        }
+                    }
+                    else
+                    {
+                        InvasionButton.Texture = new Texture(Textures.Load("menu", "mode_d_sel.png"));
+                    }
+                }
+                else if (Discord.IsReady)
+                {
+                    /*OngoingInvasion = (bool)(Game.Execute("register" +
+                        "?discID=" + Discord.You.ID +
+                        "&discName=" + Discord.You.Username +
+                        "&discNum=" + Discord.You.Discriminator
+                    )["Defend"]);*/
+                }
+                ArcadeModeButton.Draw(target, RenderStates.Default);
+                if (Game.Configs.AutoStart == -1)
+                {
+                    if (OngoingInvasion)
+                    {
+                        InvasionButton.Draw(target, RenderStates.Default);
+                    }
+                    TeamModeButton.Draw(target, RenderStates.Default);
+                    ExitGameButton.Draw(target, RenderStates.Default);
+                }
+                if (AppyAlpha > 0)
+                {
+                    AppyDays.Color = new Color(255, 255, 255, (byte)(AppyAlpha));
+                    AppyAlpha -= target.FrameDelta * 2;
                 }
             }
             else
             {
-                long ms = this.BlinkTimer.ElapsedMilliseconds;
-                if (ms > 50)
+                if (SplashTimer.ElapsedMilliseconds < 11394)
                 {
-                    if (ms > 100)
+                    if (!PlayedAppySound)
                     {
-                        this.Logo.Texture = Textures.Load("logo", "logo_0.png");
-                    }
-                    else
-                    {
-                        this.Logo.Texture = Textures.Load("logo", "logo_1.png");
+                        Sounds.Play("appydays.ogg");
+                        PlayedAppySound = true;
                     }
                 }
-                else
-                {
-                    this.Logo.Texture = Textures.Load("logo", "logo_2.png");
-                }
             }
-            this.Logo.Draw(target, RenderStates.Default);
-            switch (this.TabIndex)
-            {
-                case 0:
-                    this.Mod1.Texture = Textures.Load("menu", "mode_1.png"); this.Mod2.Texture = Textures.Load("menu", "mode_2.png");
-                    this.Mod0.Texture = Textures.Load("menu", "mode_0_sel.png");
-                    break;
-                case 1:
-                    this.Mod0.Texture = Textures.Load("menu", "mode_0.png"); this.Mod2.Texture = Textures.Load("menu", "mode_2.png");
-                    this.Mod1.Texture = Textures.Load("menu", "mode_1_sel.png");
-                    break;
-                case 2:
-                    this.Mod0.Texture = Textures.Load("menu", "mode_0.png"); this.Mod1.Texture = Textures.Load("menu", "mode_1.png");
-                    this.Mod2.Texture = Textures.Load("menu", "mode_2_sel.png");
-                    break;
-                default:
-                    break;
-            }
-            this.Mod0.Draw(target, RenderStates.Default);
-            if (Game.Configs.AutoStart == -1)
-            {
-                this.Mod1.Draw(target, RenderStates.Default);
-                this.Mod2.Draw(target, RenderStates.Default);
-            }
+            AppyDays.Draw(target, RenderStates.Default);
         }
     }
 }

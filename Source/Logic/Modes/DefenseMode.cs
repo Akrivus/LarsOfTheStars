@@ -1,20 +1,16 @@
 ﻿using LarsOfTheStars.Source.Client;
 using LarsOfTheStars.Source.Client.Objects;
-using LarsOfTheStars.Source.Client.Screens;
+using LarsOfTheStars.Source.Files;
 using LarsOfTheStars.Source.Integration;
 using LarsOfTheStars.Source.Logic.Objects;
-using LarsOfTheStars.Source.Files;
-using System;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Net;
 using SFML.Graphics;
 using SFML.Window;
+using System.Diagnostics;
+using System.IO;
 
 namespace LarsOfTheStars.Source.Logic.Modes
 {
-    public class ArcadeMode : Mode
+    public class DefenseMode : Mode
     {
         // Top-left-corner GUIs.
         private Sprite FacePlate = new Sprite(Textures.Load("plate", "p1", "face_0.png"));
@@ -22,11 +18,6 @@ namespace LarsOfTheStars.Source.Logic.Modes
         private Sprite HealthBar = new Sprite(Textures.Load("plate", "p1", "bar_health.png"));
         private Sprite LevelBar = new Sprite(Textures.Load("plate", "p1", "bar_level.png"));
         private Text ScoreHudText = new Text("", Fonts.Load("gameover.ttf"), 75);
-        private Text HighScoreHudText = new Text("", Fonts.Load("gameover.ttf"), 75);
-
-        // Top-center GUIs.
-        private Sprite BossPlate = new Sprite(Textures.Load("plate", "boss", "bars.png"));
-        private Sprite BossBar = new Sprite(Textures.Load("plate", "boss", "bar_health.png"));
 
         // Game over GUIs.
         private Text GameOverText = new Text("Game Over", Fonts.Load("start2p.ttf"), 75);
@@ -50,18 +41,14 @@ namespace LarsOfTheStars.Source.Logic.Modes
         public Stopwatch UpdateTimer = new Stopwatch();
         public Stopwatch LevelTimer = new Stopwatch();
 
-        // Injected models.
-        public ModelBoss Boss = new ModelBoss();
-
         // Game values.
         public float PassesUntilNextLevel = 0;
         public float Passes = 0;
         public float PassAttempts = 0;
         public int ComboStreak = 0;
         public int HighestScoreInRound = 0;
-        public int HighScore = 0;
         public int Score = 0;
-        
+
         // Trigger on start of mode.
         public override void Start()
         {
@@ -74,13 +61,7 @@ namespace LarsOfTheStars.Source.Logic.Modes
             // Score elements.
             ScoreHudText.Position = new Vector2f(1, 7);
             ScoreHudText.Scale = new Vector2f(0.1F, 0.1F);
-            HighScoreHudText.Position = new Vector2f(1, 7);
-            HighScoreHudText.Scale = new Vector2f(0.1F, 0.1F);
 
-            // Position boss HUD.
-            BossPlate.Position = new Vector2f(96, -17);
-            BossBar.Position = new Vector2f(101, 25);
-            
             // Position game over screen.
             GameOverText.Position = new Vector2f(128, 96); GameOverText.Origin = new Vector2f(GameOverText.GetLocalBounds().Width / 2, GameOverText.GetLocalBounds().Height / 2);
             GameOverText.Scale = new Vector2f(0.25F, 0.25F);
@@ -92,36 +73,13 @@ namespace LarsOfTheStars.Source.Logic.Modes
             LevelNameText.Scale = new Vector2f(0.25F, 0.25F);
             LevelNameText.Origin = new Vector2f(LevelNameText.GetLocalBounds().Width / 2, LevelNameText.GetLocalBounds().Height / 2);
             LevelNameText.Position = new Vector2f(128, 96);
-            
+
             // Start timers.
             BlinkTimer.Start();
             TitleTimer.Start();
             ComboTimer.Start();
             UpdateTimer.Start();
             LevelTimer.Start();
-
-            // Create high scores.
-            if (File.Exists("LarsOfTheStars.hsc1"))
-            {
-                HighScore = int.Parse(File.ReadAllText("LarsOfTheStars.hsc1"));
-            }
-            else
-            {
-                HighScore = 0;
-            }
-
-            // Reset score.
-            Score = 0;
-            HighestScoreInRound = 0;
-            PassesUntilNextLevel = 12;
-            Passes = 0;
-            PassAttempts = 0;
-            Level = 0;
-            int LevelSet = 1;
-            for (int i = 0; i < LevelSet; ++i)
-            {
-                LevelUp();
-            }
 
             // Reset entities and spawn player.
             Game.ClientEntities.Clear();
@@ -147,11 +105,7 @@ namespace LarsOfTheStars.Source.Logic.Modes
                     HealthBar.Position = new Vector2f(25, 5);
                     LevelBar.Position = new Vector2f(25, 14);
                     ScoreHudText.DisplayedString = "Score: " + Score;
-                    if (Score >= HighScore)
-                    {
-                        ScoreHudText.Color = Color.Yellow;
-                    }
-                    else if (Score < HighestScoreInRound)
+                    if (Score < HighestScoreInRound)
                     {
                         ScoreHudText.Color = Color.Red;
                     }
@@ -167,33 +121,6 @@ namespace LarsOfTheStars.Source.Logic.Modes
                     {
                         ScoreHudText.Position = new Vector2f(1, 23);
                     }
-                    HighScoreHudText.DisplayedString = "High: " + HighScore;
-                    if (HighScoreHudText.Position.Y < 29)
-                    {
-                        HighScoreHudText.Position = new Vector2f(1, HighScoreHudText.Position.Y + target.FrameDelta);
-                    }
-                    else
-                    {
-                        HighScoreHudText.Position = new Vector2f(1, 29);
-                    }
-                }
-                BossBar.TextureRect = new IntRect(0, 0, (int)(((100.0F - Boss.Damage) / 100.0F) * 54F), 6);
-                if (Level == 10)
-                {
-                    if (BossPlate.Position.Y < 2)
-                    {
-                        BossPlate.Position = new Vector2f(96, BossPlate.Position.Y + target.FrameDelta);
-                        BossBar.Position = new Vector2f(BossPlate.Position.X + 5, BossPlate.Position.Y + 23);
-                    }
-                    else
-                    {
-                        BossPlate.Position = new Vector2f(96, 2);
-                        BossBar.Position = new Vector2f(101, 25);
-                    }
-                }
-                else
-                {
-                    BossPlate.Position = new Vector2f(96, -17);
                 }
                 if (BlinkTimer.ElapsedMilliseconds > 4000)
                 {
@@ -245,67 +172,7 @@ namespace LarsOfTheStars.Source.Logic.Modes
             {
                 if (Game.ServerPlayer1.IsNotDead())
                 {
-                    if (Level == 10)
-                    {
-                        if (!Game.ServerEntities.Contains(Boss))
-                        {
-                            Game.AddEntity(new RenderBoss(Boss));
-                        }
-                        if (Boss.IsDead())
-                        {
-                            LevelUp();
-                        }
-                    }
-                    else
-                    {
-                        if (Game.ServerPlayer1.IsNotDead() && UpdateTimer.ElapsedMilliseconds > 20 && TitleTimer.ElapsedMilliseconds > 2000)
-                        {
-                            float delay = -(4.2F * (float)(10 * Math.Ceiling((Level % 10 + 1) / 10.0)) * Level) + (10 * Game.Configs.Difficulty) * (float)(Math.Sin(Level * Level)) / (float)(Math.Ceiling(Level / 10.0F)) + 1000;
-                            delay *= Math.Max(0.25F, (1.0F - PassAttempts / PassesUntilNextLevel) * Game.Configs.Difficulty);
-                            if (LevelTimer.ElapsedMilliseconds > Math.Max(20, delay))
-                            {
-                                if (Level % 2 == 0)
-                                {
-                                    Game.AddEntity(new RenderDiver(new ModelDiver(Level)));
-                                    PassAttempts += 1;
-                                }
-                                else if (Level % 3 == 0)
-                                {
-                                    if (Game.RNG.Next(3) > 0)
-                                    {
-                                        Game.AddEntity(new RenderSinker(new ModelSinker()));
-                                        PassAttempts += 1;
-                                    }
-                                    else
-                                    {
-                                        Game.AddEntity(new RenderDiver(new ModelDiver()));
-                                        PassAttempts += 1;
-                                    }
-                                }
-                                else if (Level == 5 || Level == 7)
-                                {
-                                    // These are prime intro rounds.
-                                }
-                                else
-                                {
-                                    Game.AddEntity(new RenderSinker(new ModelSinker()));
-                                    PassAttempts += 1;
-                                }
-                                if (Level % 5 == 0 || Level % 11 == 0)
-                                {
-                                    Game.AddEntity(new RenderSpinner(new ModelSpinner()));
-                                    PassAttempts += 1;
-                                }
-                                if (Level % 7 == 0 || Level % 13 == 0)
-                                {
-                                    Game.AddEntity(new RenderArcher(new ModelArcher()));
-                                    PassAttempts += 1;
-                                }
-                                LevelTimer.Restart();
-                            }
-                            UpdateTimer.Restart();
-                        }
-                    }
+                    
                 }
             }
             Game.ClientPlayer1.Update(target);
@@ -320,10 +187,6 @@ namespace LarsOfTheStars.Source.Logic.Modes
                     Game.IsOnStartScreen = true;
                 }
             }
-            if (Passes >= PassesUntilNextLevel)
-            {
-                LevelUp();
-            }
             Sounds.SetPitch(target.SpeedFactor);
         }
         public override void PostRender(Display target)
@@ -331,16 +194,10 @@ namespace LarsOfTheStars.Source.Logic.Modes
             if (Game.ServerPlayer1.IsNotDead())
             {
                 ScoreHudText.Draw(target, RenderStates.Default);
-                HighScoreHudText.Draw(target, RenderStates.Default);
                 BarPlate.Draw(target, RenderStates.Default);
                 HealthBar.Draw(target, RenderStates.Default);
                 LevelBar.Draw(target, RenderStates.Default);
                 FacePlate.Draw(target, RenderStates.Default);
-                if (Level == 10)
-                {
-                    BossPlate.Draw(target, RenderStates.Default);
-                    BossBar.Draw(target, RenderStates.Default);
-                }
                 if (FaderAlpha > 0)
                 {
                     Fader.Color = new Color(255, 255, 255, (byte)(FaderAlpha));
@@ -452,49 +309,13 @@ namespace LarsOfTheStars.Source.Logic.Modes
                 {
                     HighestScoreInRound = Score;
                 }
-                if (Score > HighScore)
-                {
-                    try { File.WriteAllText("LarsOfTheStars.hsc1", Score.ToString()); } catch { }
-                    HighScore = Score;
-                }
             }
-        }
-        public void LevelUp()
-        {
-            Level += 1;
-            Passes = 0;
-            PassAttempts = 0;
-            PassesUntilNextLevel *= 0.75F / (Game.Configs.Difficulty / 2);
-            TitleTimer.Restart();
-            if (Game.ServerPlayer1.Damage == 0)
-            {
-                for (int i = 0; i < Game.ServerEntities.Count; ++i)
-                {
-                    Model model = Game.ServerEntities[i];
-                    if (model.CanBeSwept())
-                    {
-                        Score += 1;
-                        model.OnDeath();
-                        model.Kill();
-                    }
-                }
-            }
-            else if (Score > 0)
-            {
-                Game.ServerPlayer1.Damage = 0;
-            }
-            Game.AddEntity(new RenderIndicator(new ModelIndicator(Game.ServerPlayer1.Position.X, Game.ServerPlayer1.Position.Y, "Level up!", Color.Yellow)));
-            for (int i = 0; i < Game.Configs.MaxParticles / 3; ++i)
-            {
-                Game.AddEntity(new RenderParticle(new ModelParticle(Game.ServerPlayer1.Position.X + (Game.RNG.Next(16) - 8), Game.ServerPlayer1.Position.Y + (Game.RNG.Next(16) - 8), Game.RNG.Next(360), Color.Yellow)));
-            }
-            Sounds.Play("start.ogg");
         }
         public override void GetRPC()
         {
-            Discord.RP.Assets.SmallImageText = "Playing Arcade Mode";
-            Discord.RP.Assets.SmallImageKey = "p1";
-            Discord.RP.Details = "Arcade Mode | Level " + Level;
+            Discord.RP.Assets.SmallImageText = "Playing Defense Mode";
+            Discord.RP.Assets.SmallImageKey = "p3";
+            Discord.RP.Details = "Defense Mode | Level " + Level;
             Discord.RP.State = "Score: " + Score;
             Discord.PushUpdate = true;
         }

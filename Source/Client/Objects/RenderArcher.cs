@@ -10,19 +10,19 @@ namespace LarsOfTheStars.Source.Client.Objects
         private Sprite Gunner;
         public RenderArcher(ModelArcher model) : base(model)
         {
-            this.Gunner = new Sprite(Textures.Load("enemies", "archer_1.png"));
-            this.Gunner.Origin = new Vector2f(this.Gunner.Texture.Size.X / 2, this.Gunner.Texture.Size.Y / 2);
-            this.Gunner.Scale = new Vector2f(2, 2);
-            this.Sprite = new Sprite(Textures.Load("enemies", "archer_0.png"));
-            this.Sprite.Origin = new Vector2f(this.Sprite.Texture.Size.X / 2, this.Sprite.Texture.Size.Y / 2);
-            this.Sprite.Scale = new Vector2f(2, 2);
+            Gunner = new Sprite(Textures.Load("enemies", "archer_1.png"));
+            Gunner.Origin = new Vector2f(Gunner.Texture.Size.X / 2, Gunner.Texture.Size.Y / 2);
+            Gunner.Scale = new Vector2f(2, 2);
+            Sprite = new Sprite(Textures.Load("enemies", "archer_0.png"));
+            Sprite.Origin = new Vector2f(Sprite.Texture.Size.X / 2, Sprite.Texture.Size.Y / 2);
+            Sprite.Scale = new Vector2f(2, 2);
         }
         public override void Update(Display target)
         {
-            this.Gunner.Position = this.Base.Position;
-            this.Gunner.Rotation = 0;
-            this.Gunner.Draw(target, RenderStates.Default);
-            this.Sprite.Rotation = this.Base.Rotation;
+            Gunner.Position = Base.Position;
+            Gunner.Rotation = 0;
+            Gunner.Draw(target, RenderStates.Default);
+            Sprite.Rotation = Base.Rotation;
             base.Update(target);
         }
     }

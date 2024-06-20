@@ -7,6 +7,8 @@ using LarsOfTheStars.Source.Files;
 using System;
 using System.Collections.Generic;
 using SFML.Window;
+using System.Net;
+using Newtonsoft.Json.Linq;
 
 namespace LarsOfTheStars.Source
 {
@@ -24,7 +26,9 @@ namespace LarsOfTheStars.Source
         public static Mode[] Modes = new Mode[]
         {
             new ArcadeMode(),
-            new Mode()
+            new TeamMode(),
+            new ExitMode(),
+            new DefenseMode()
         };
         public static float FramesPerSecond = 60;
         public static List<Render> ClientEntities = new List<Render>();
@@ -35,6 +39,8 @@ namespace LarsOfTheStars.Source
         public static RenderPlayer ClientPlayer2;
         public static Configs Configs;
         public static Random RNG = new Random();
+        public static WebClient Client = new WebClient();
+        public static string URI = "http://localhost:2633/";
         public static int Version = 1;
         public static void Main(string[] args)
         {
@@ -50,6 +56,14 @@ namespace LarsOfTheStars.Source
         {
             ClientEntities.Add(client);
             ServerEntities.Add(client.Base);
+        }
+        public static JObject Execute(string method)
+        {
+            return JObject.Parse(Client.DownloadString(URI + method));
+        }
+        public static void ExecuteAsync(string method)
+        {
+            Client.DownloadStringAsync(new Uri(URI + method));
         }
     }
 }

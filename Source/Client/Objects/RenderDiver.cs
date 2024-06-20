@@ -9,9 +9,9 @@ namespace LarsOfTheStars.Source.Client.Objects
     {
         public RenderDiver(ModelDiver model) : base(model)
         {
-            this.Sprite = new Sprite(Textures.Load("enemies", "diver.png"));
-            this.Sprite.Origin = new Vector2f(this.Sprite.Texture.Size.X / 2, this.Sprite.Texture.Size.Y / 2);
-            this.Sprite.Scale = new Vector2f(2, 2);
+            Sprite = new Sprite(Textures.Load("enemies", "diver.png"));
+            Sprite.Origin = new Vector2f(Sprite.Texture.Size.X / 2, Sprite.Texture.Size.Y / 2);
+            Sprite.Scale = new Vector2f(2, 2);
         }
     }
 }

@@ -9,17 +9,17 @@ namespace LarsOfTheStars.Source.Client.Objects
     {
         public RenderLaser(ModelLaser model) : base(model)
         {
-            this.Sprite = new Sprite(Textures.Load("laser.png"));
-            this.Sprite.Origin = new Vector2f(this.Sprite.Texture.Size.X / 2, this.Sprite.Texture.Size.Y / 2);
-            this.Sprite.Color = model.Color;
-            this.Sprite.Scale = new Vector2f(2, 2);
+            Sprite = new Sprite(Textures.Load("laser.png"));
+            Sprite.Origin = new Vector2f(Sprite.Texture.Size.X / 2, Sprite.Texture.Size.Y / 2);
+            Sprite.Color = model.Color;
+            Sprite.Scale = new Vector2f(2, 2);
         }
         public override void Update(Display target)
         {
-            ModelLaser laser = ((ModelLaser) this.Base);
+            ModelLaser laser = ((ModelLaser) Base);
             if (laser.FlashRainbowColors)
             {
-                this.Sprite.Color = laser.Color;
+                Sprite.Color = laser.Color;
             }
             base.Update(target);
         }
